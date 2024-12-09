@@ -83,7 +83,8 @@ wheels/
 *.egg
 
 # PyInstaller
-*.manifest
+dist/
+build/
 *.spec
 
 # Installer logs

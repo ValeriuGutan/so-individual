@@ -1,5 +1,13 @@
 # Invoice Manager
 
-## Instalare
+## Build Application
 
-1. Creați un mediu virtual:
+python build.py
+
+# Run mac
+
+./dist/InvoiceManager.app/Contents/MacOS/InvoiceManager
+
+# run windows
+
+./dist/InvoiceManager.exe
