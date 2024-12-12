@@ -12,7 +12,7 @@ class InvoiceView(QWidget):
         self.api_client = APIClient()
         self.init_ui()
         
-        # Încercăm să încărcăm datele, dar gestionăm erorile mai elegant
+
         try:
             self.load_invoices()
         except Exception as e:
@@ -59,9 +59,8 @@ class InvoiceView(QWidget):
             "Issue Date", "Due Date", "Total Amount", "Actions"
         ])
 
-        # Setăm dimensiunile specifice pentru fiecare coloană
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)  # ID
-        self.table.setColumnWidth(0, 50)  # ID width
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)  
+        self.table.setColumnWidth(0, 50) 
         
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)  # Organization
         
@@ -112,23 +111,28 @@ class InvoiceView(QWidget):
             invoices = self.api_client.get_invoices()
             self.table.setRowCount(len(invoices))
             for i, inv in enumerate(invoices):
-                self.table.setItem(i, 0, QTableWidgetItem(str(inv['id'])))
-                self.table.setItem(i, 1, QTableWidgetItem(inv['organization_name']))
-                self.table.setItem(i, 2, QTableWidgetItem(inv['invoice_number']))
-                self.table.setItem(i, 3, QTableWidgetItem(str(inv['issue_date'])))
-                self.table.setItem(i, 4, QTableWidgetItem(str(inv['due_date'])))
-                self.table.setItem(i, 5, QTableWidgetItem(f"${float(inv['total_amount']):.2f}"))
+                try:
+                    self.table.setItem(i, 0, QTableWidgetItem(str(inv['id'])))
+                    self.table.setItem(i, 1, QTableWidgetItem(inv.get('organization_name', 'N/A')))
+                    self.table.setItem(i, 2, QTableWidgetItem(inv['invoice_number']))
+                    self.table.setItem(i, 3, QTableWidgetItem(str(inv['issue_date'])))
+                    self.table.setItem(i, 4, QTableWidgetItem(str(inv['due_date'])))
+                    self.table.setItem(i, 5, QTableWidgetItem(f"${float(inv['total_amount']):.2f}"))
+                    
+                    actions_widget = QWidget()
+                    actions_layout = QHBoxLayout(actions_widget)
+                    actions_layout.setContentsMargins(4, 4, 4, 4)
+                    
+                except KeyError:
+                    self.table.setItem(i, 1, QTableWidgetItem("N/A"))
                 
-                # Creăm widget pentru butoane
                 actions_widget = QWidget()
                 actions_layout = QHBoxLayout(actions_widget)
                 actions_layout.setContentsMargins(4, 4, 4, 4)
                 
-                # Butoane pentru acțiuni
                 btn_edit = QPushButton("Edit")
                 btn_delete = QPushButton("Delete")
                 
-                # Stilizare butoane
                 btn_edit.setStyleSheet("""
                     QPushButton {
                         background-color: #2196F3;
@@ -153,7 +157,6 @@ class InvoiceView(QWidget):
                     }
                 """)
                 
-                # Conectăm butoanele la acțiuni
                 btn_edit.clicked.connect(lambda checked, invoice=inv: self.show_edit_dialog(invoice))
                 btn_delete.clicked.connect(lambda checked, invoice_id=inv['id']: self.delete_invoice(invoice_id))
                 
@@ -191,7 +194,6 @@ class InvoiceView(QWidget):
         msg_box.setText("Are you sure you want to delete this invoice?")
         msg_box.setIcon(QMessageBox.Icon.Question)
         
-        # Stilizăm dialogul și butoanele
         msg_box.setStyleSheet("""
             QMessageBox {
                 background-color: white;
@@ -227,10 +229,8 @@ class InvoiceView(QWidget):
         yes_button = msg_box.addButton("Yes", QMessageBox.ButtonRole.YesRole)
         no_button = msg_box.addButton("No", QMessageBox.ButtonRole.NoRole)
         
-        # Setăm butonul No ca implicit
         msg_box.setDefaultButton(no_button)
         
-        # Afișăm dialogul și procesăm rezultatul
         response = msg_box.exec()
         
         if msg_box.clickedButton() == yes_button:
@@ -256,17 +256,13 @@ class InvoiceDialog(QDialog):
         layout.setSpacing(10)
         layout.setContentsMargins(10, 10, 10, 10)
         
-        # Form layout pentru detaliile facturii
         form_layout = QFormLayout()
         
-        # Selectare organizație
         self.org_combo = QComboBox()
         self.load_organizations()
         
-        # Număr factură
         self.invoice_number = QLineEdit()
         
-        # Date
         self.issue_date = QDateEdit()
         self.issue_date.setCalendarPopup(True)
         self.issue_date.setDate(QDate.currentDate())
@@ -275,7 +271,6 @@ class InvoiceDialog(QDialog):
         self.due_date.setCalendarPopup(True)
         self.due_date.setDate(QDate.currentDate().addDays(30))
         
-        # Note
         self.notes = QLineEdit()
         
         form_layout.addRow("Organization:", self.org_combo)
@@ -286,12 +281,10 @@ class InvoiceDialog(QDialog):
         
         layout.addLayout(form_layout)
         
-        # Items section as a table
         self.items_table = QTableWidget()
         self.items_table.setColumnCount(5)
         self.items_table.setHorizontalHeaderLabels(["Description", "Quantity", "Unit", "Total", "Actions"])
         
-        # Setăm dimensiunile specifice pentru fiecare coloană
         self.items_table.setColumnWidth(0, 300)  # Description
         self.items_table.setColumnWidth(1, 100)  # Quantity
         self.items_table.setColumnWidth(2, 100)  # Unit
@@ -487,7 +480,6 @@ class InvoiceDialog(QDialog):
         
     def save_invoice(self):
         try:
-            # Colectăm datele pentru items
             items = []
             for row in range(self.items_table.rowCount()):
                 description = self.items_table.cellWidget(row, 0).text()
@@ -549,12 +541,10 @@ class InvoiceDialog(QDialog):
         self.due_date.setDate(QDate.fromString(self.invoice['due_date'], Qt.DateFormat.ISODate))
         self.notes.setText(self.invoice.get('notes', ''))
         
-        # Selectăm organizația
         index = self.org_combo.findData(self.invoice['organization_id'])
         if index >= 0:
             self.org_combo.setCurrentIndex(index)
             
-        # Adăugăm items
         for item in self.invoice['items']:
             self.add_item_row(item)
             

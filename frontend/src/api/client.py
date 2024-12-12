@@ -44,7 +44,13 @@ class APIClient:
         self._make_request("DELETE", f"/organizations/{org_id}")
 
     def get_invoices(self) -> List[Dict]:
-        return self._make_request("GET", "/invoices/")
+        try:
+            response = self._make_request("GET", "/invoices/")
+            return response
+        except Exception as e:
+            print(f"Error in get_invoices: {str(e)}")
+            print(f"Response content: {getattr(e, 'response', {}).get('content', 'No content')}")
+            raise
 
     def get_invoice(self, invoice_id: int) -> Dict:
         return self._make_request("GET", f"/invoices/{invoice_id}")

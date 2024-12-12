@@ -50,8 +50,13 @@ def build_application():
         if system == 'darwin':
             app_path = os.path.join('dist', f'{app_name}.app')
 
-            os.chmod(os.path.join('dist', 'run_debug.sh'), 0o755)
+            with open(os.path.join('dist', 'run_debug.sh'), 'w') as f:
+                f.write(f'''#!/bin/bash
+cd "{os.path.dirname(app_path)}"
+"{app_path}/Contents/MacOS/{app_name}"
+''')
             
+            os.chmod(os.path.join('dist', 'run_debug.sh'), 0o755)
 
             with open(os.path.join('dist', 'run.sh'), 'w') as f:
                 f.write(f'''#!/bin/bash

@@ -30,8 +30,13 @@ class InvoiceItemBase(BaseModel):
     quantity: float
     unit_price: float
 
-class InvoiceItemCreate(InvoiceItemBase):
-    pass
+class InvoiceItemCreate(BaseModel):
+    description: str
+    quantity: float
+    unit_price: float
+
+    class Config:
+        from_attributes = True
 
 class InvoiceItemResponse(BaseModel):
     id: int
@@ -50,8 +55,16 @@ class InvoiceBase(BaseModel):
     due_date: date
     notes: Optional[str] = None
 
-class InvoiceCreate(InvoiceBase):
+class InvoiceCreate(BaseModel):
+    organization_id: int
+    invoice_number: str
+    issue_date: date
+    due_date: date
+    notes: Optional[str] = None
     items: List[InvoiceItemCreate]
+
+    class Config:
+        from_attributes = True
 
 class InvoiceResponse(BaseModel):
     id: int
@@ -179,10 +192,9 @@ def create_invoice(invoice: InvoiceCreate, db: Session = Depends(get_db)):
 @router.get("/invoices/", response_model=List[InvoiceResponse])
 def get_invoices(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     try:
-        invoices = db.query(Invoice).offset(skip).limit(limit).all()
+        invoices = db.query(Invoice).join(Organization).offset(skip).limit(limit).all()
         response_invoices = []
         for invoice in invoices:
-            # Convertim explicit valorile Decimal în float pentru serializare
             invoice_dict = {
                 'id': invoice.id,
                 'organization_id': invoice.organization_id,
